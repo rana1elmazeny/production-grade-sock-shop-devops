@@ -1,0 +1,23 @@
+name: Sock Shop CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Confirm pipeline is running
+        run: |
+          echo "GitHub Actions is now replacing Jenkins"
+          echo "Pipeline started successfully"
+
+      - name: Show repository structure
+        run: ls -la
