@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REPO = '761584754918.dkr.ecr.us-east-1.amazonaws.com/sockshop-frontend'
+        IMAGE_TAG = 'latest'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/rana1elmazeny/production-grade-sock-shop-devops.git'
+            }
+        }
+
+        stage('Check Docker') {
+            steps {
+                sh 'docker --version'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t sockshop-frontend .'
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                sh 'trivy image sockshop-frontend'
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+
+                    sh '''
+                    aws ecr get-login-password --region $AWS_REGION | \
+                    docker login --username AWS --password-stdin $ECR_REPO
+                    '''
+                }
+            }
+        }
+
+        stage('Tag Docker Image') {
+            steps {
+                sh '''
+                docker tag sockshop-frontend:latest \
+                $ECR_REPO:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh '''
+                docker push $ECR_REPO:$IMAGE_TAG
+                '''
+            }
+        }
+    }
+}

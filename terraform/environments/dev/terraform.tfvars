@@ -3,7 +3,7 @@ vpc_cidr   = "10.0.0.0/16"
 
 key_name = "sockshop-key"
 
-my_ip = "41.33.136.51/32"
+my_ip = "41.33.136.54/32"
 
 ami_id = "ami-020cba7c55df1f615"
 

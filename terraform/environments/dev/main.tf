@@ -168,3 +168,72 @@ resource "aws_instance" "sonarqube" {
     Role        = "SonarQube"
   }
 }
+resource "aws_ecr_repository" "sockshop_frontend" {
+  name                 = "sockshop-frontend"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  tags = {
+    Name        = "sockshop-frontend-ecr"
+    Project     = "SockShop"
+    Environment = "Dev"
+  }
+}
+
+resource "aws_security_group" "jenkins_sg" {
+  name        = "sockshop-jenkins-sg"
+  description = "Allow SSH and Jenkins access"
+  vpc_id      = aws_vpc.sockshop_vpc.id
+
+  ingress {
+    description = "SSH from my IP"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip]
+  }
+
+  ingress {
+    description = "Jenkins UI on 8080"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "sockshop-jenkins-sg"
+    Project     = "SockShop"
+    Environment = "Dev"
+  }
+}
+
+resource "aws_instance" "jenkins" {
+  ami                         = var.ami_id
+  instance_type               = "t3.small"
+  subnet_id                   = aws_subnet.public_subnets[0].id
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  key_name                    = var.key_name
+  associate_public_ip_address = true
+
+  tags = {
+    Name        = "sockshop-jenkins"
+    Project     = "SockShop"
+    Environment = "Dev"
+    Role        = "Jenkins"
+  }
+}
